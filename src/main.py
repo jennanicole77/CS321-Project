@@ -5,6 +5,12 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
+# Selenium Driver is different for the OS you are using, choose one of the following
+#PATH = "dependencies/windowschromedriver"
+PATH = "dependencies/m1chromedriver"
+#PATH = "dependencies/macchromedriver"
+
+
 
 
 # A class that defines the attributes of a GPU
@@ -48,8 +54,6 @@ def grab_profitability():
     # Url where profitability will be pulled from
     hiveon_url = "https://hiveon.net/"
 
-    PATH = "dependencies/m1chromedriver"
-
     #Forces selenium to run on headless mode
     op = webdriver.ChromeOptions()
     op.add_argument('headless')
@@ -85,7 +89,7 @@ def grab_eth_price():
     # Url where profitability will be pulled from
     url = "https://www.google.com/search?q=Ethereum+Price&oq=Ethereum+Price&aqs=chrome..69i57j69i60.1759j0j4&sourceid=chrome&ie=UTF-8"
 
-    PATH = "dependencies/m1chromedriver"
+    
 
     #Forces selenium to run on headless mode
     op = webdriver.ChromeOptions()
