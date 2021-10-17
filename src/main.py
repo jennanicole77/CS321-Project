@@ -4,10 +4,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import json
 
 # Selenium Driver is different for the OS you are using, choose one of the following
-#PATH = "dependencies/windowschromedriver"
-PATH = "dependencies/m1chromedriver"
+PATH = "dependencies/windowschromedriver"
+#PATH = "dependencies/m1chromedriver"
 #PATH = "dependencies/macchromedriver"
 
 
@@ -23,7 +24,44 @@ class GPU:
     def __str__(self):
         return "name: {0}, hash: {1}, power: {2}, quantity: {3}".format(self.name, self.hash, self.power, self.quantity)
 
-# Loads up the GPU name, hashrate and power consumption into a dictionary. 
+# Class that stores the User's parameters
+class User:
+    def __init__(self, ethereum, ppw, user_gpu):
+        self.ethereum = ethereum
+        self.ppw = ppw
+        self.user_gpu = user_gpu
+        self.total_hashrate = get_total_hashrate(self)
+        self.roi = 1
+    def __str__(self):
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}".format(self.ethereum, self.ppw, self.total_hashrate)
+
+
+# Returns the total hash rate of the user's GPUs
+def get_total_hashrate(user):
+    total_hashrate =  0
+    for keys in user.user_gpu:
+        total_hashrate += float(user.user_gpu[keys].hash) * float(user.user_gpu[keys].quantity)
+    return total_hashrate
+
+# Returns the total cost of power consumption in a 24 hour period
+def  power_usage(user):
+    power_usage = 0
+    total_gpu_power = 0
+    for keys in user.user_gpu:
+        total_gpu_power += float(user.user_gpu[keys].power) * float(user.user_gpu[keys].quantity)
+    power_usage = (total_gpu_power/1000) * user.ppw * 24
+    return power_usage
+
+# Returns expected daily revenue before power costs
+def daily_revenue(user):
+    daily_revenue = (get_total_hashrate(user)/100) * grab_profitability()
+    return daily_revenue
+
+# Returns expected daily earnings with power costs
+def daily_earnings(user):
+    return daily_revenue(user) - power_usage(user)
+
+# Loads up the GPU name, hashrate and power consumption into a dictionary
 def load_gpus(gpu_dict):
 
     f = open("data/gpuhashrate.dat", "r")
@@ -32,6 +70,38 @@ def load_gpus(gpu_dict):
         gpu_dict[temp_list[0]] = (GPU(temp_list[0], temp_list[1], temp_list[2]))
 
     f.close()
+
+# Saves session's data into a json file
+def save(user):
+    gpus = dict()
+    for keys in user.user_gpu:
+        gpus[keys] = {"name" : user.user_gpu[keys].name, "quantity" : user.user_gpu[keys].quantity}
+
+    data = {"ethereum" : user.ethereum, "ppw" : user.ppw, "user gpus" : gpus}
+
+    with open("sessions\saved_session.json", "w") as f:
+        json.dump(data, f)
+
+# Loads a saved user session
+def load():
+    f = open("sessions\saved_session.json")
+    data = json.load(f)
+
+    gpu_dict = dict()
+    user_gpu = dict()
+    load_gpus(gpu_dict)
+
+    for keys in data["user gpus"]:
+        for x in range(0, data["user gpus"][keys]["quantity"]):
+            add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
+
+
+    user = User(data["ethereum"], data["ppw"], user_gpu)
+    return user
+
+# Calculates the return on investment
+def calculateROI():
+    return 1
 
 # This function adds a gpu to the user dictionary
 def add_gpus(user_gpu, gpu_dict, name):
@@ -114,23 +184,31 @@ def grab_eth_price():
 
 
 
-print(grab_profitability())
-print(grab_eth_price())
+#print(grab_profitability())
+#print(grab_eth_price())
 gpu_dict = dict()
 load_gpus(gpu_dict)
-user_gpu = dict()
-add_gpus(user_gpu, gpu_dict, "1080")
-add_gpus(user_gpu, gpu_dict, "1080")
-add_gpus(user_gpu, gpu_dict, "3080")
+#user_gpu = dict()
+#add_gpus(user_gpu, gpu_dict, "1080")
+#add_gpus(user_gpu, gpu_dict, "1080")
+#add_gpus(user_gpu, gpu_dict, "3080")
 
-remove_gpus(user_gpu, gpu_dict, "3080")
-remove_gpus(user_gpu, gpu_dict, "1080")
-
-
+#remove_gpus(user_gpu, gpu_dict, "3080")
+#remove_gpus(user_gpu, gpu_dict, "1080")
 
 
+user = load()
 
+print(power_usage(user))
 
-for keys in user_gpu:
-    print(user_gpu[keys])
+print(daily_revenue(user))
+
+print(daily_earnings(user))
+
+print(user)
+#remove_gpus(user.user_gpu, gpu_dict, "3080")
+save(user)
+
+for keys in user.user_gpu:
+    print(user.user_gpu[keys])
 
