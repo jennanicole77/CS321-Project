@@ -7,9 +7,9 @@ import time
 import json
 
 # Selenium Driver is different for the OS you are using, choose one of the following
-#PATH = "dependencies/windowschromedriver"
+PATH = "dependencies/windowschromedriver"
 #PATH = "dependencies/m1chromedriver"
-PATH = "dependencies/macchromedriver"
+#PATH = "dependencies/macchromedriver"
 
 
 
@@ -30,7 +30,7 @@ class User:
         self.ethereum = ethereum
         self.ppw = ppw
         self.user_gpu = user_gpu
-        self.total_hashrate = self.get_total_hashrate(self)
+        self.total_hashrate = self.get_total_hashrate()
         self.roi = 1
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}".format(self.ethereum, self.ppw, self.total_hashrate)
@@ -53,12 +53,12 @@ class User:
 
     # Returns expected daily revenue before power costs
     def daily_revenue(self):
-        daily_revenue = (self.get_total_hashrate(self)/100) * grab_profitability()
+        daily_revenue = (self.get_total_hashrate()/100) * grab_profitability()
         return daily_revenue
 
     # Returns expected daily earnings with power costs
     def daily_earnings(self):
-        return self.daily_revenue(self) - self.power_usage(self)
+        return self.daily_revenue() - self.power_usage()
 
     # Saves session's data into a json file
     def save(self):
@@ -207,15 +207,15 @@ load_gpus(gpu_dict)
 
 user = load()
 
-print(user.power_usage(user))
+print(user.power_usage())
 
-print(user.daily_revenue(user))
+print(user.daily_revenue())
 
-print(user.daily_earnings(user))
+print(user.daily_earnings())
 
 print(user)
 #remove_gpus(user.user_gpu, gpu_dict, "3080")
-user.save(user)
+user.save()
 
 for keys in user.user_gpu:
     print(user.user_gpu[keys])
