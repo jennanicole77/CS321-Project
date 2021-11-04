@@ -1,1 +1,1 @@
-{"ethereum": 400, "ppw": 0.12, "user gpus": {"1080": {"name": "1080", "quantity": 2}}}
+{"ethereum": 400, "ppw": 0.12, "tax": 0.1, "investment": 5000, "user gpus": {"1080": {"name": "1080", "quantity": 2}}}

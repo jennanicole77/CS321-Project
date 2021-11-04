@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import json
+import math
 
 # Selenium Driver is different for the OS you are using, choose one of the following
 PATH = "dependencies/windowschromedriver"
@@ -26,14 +27,16 @@ class GPU:
 
 # Class that stores the User's parameters
 class User:
-    def __init__(self, ethereum, ppw, user_gpu):
+    def __init__(self, ethereum, ppw, user_gpu, tax, investment):
         self.ethereum = ethereum
         self.ppw = ppw
         self.user_gpu = user_gpu
+        self.tax = tax
+        self.investment = investment
         self.total_hashrate = self.get_total_hashrate()
         self.roi = 1
     def __str__(self):
-        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}".format(self.ethereum, self.ppw, self.total_hashrate)
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, investment: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.investment)
     
     # Returns the total hash rate of the user's GPUs
     def get_total_hashrate(self):
@@ -58,7 +61,9 @@ class User:
 
     # Returns expected daily earnings with power costs
     def daily_earnings(self):
-        return self.daily_revenue() - self.power_usage()
+        tax = self.daily_revenue() * self.tax
+        daily_earnings = self.daily_revenue() -  self.power_usage() - tax
+        return daily_earnings
 
     # Saves session's data into a json file
     def save(self):
@@ -66,10 +71,16 @@ class User:
         for keys in self.user_gpu:
             gpus[keys] = {"name" : self.user_gpu[keys].name, "quantity" : self.user_gpu[keys].quantity}
 
-        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "user gpus" : gpus}
+        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax" : self.tax, "investment" : self.investment, "user gpus" : gpus}
 
         with open("sessions\saved_session.json", "w") as f:
             json.dump(data, f)
+
+    # Calculates the return on investment
+    def calculateROI(self):
+        ROI = self.investment/self.daily_earnings()
+        math.ceil(ROI)
+        return str(math.ceil(ROI)) + " days"
 
     
 
@@ -91,8 +102,8 @@ def load_gpus(gpu_dict):
 
 
 # Loads a saved user session
-def load():
-    f = open("sessions\saved_session.json")
+def load(file):
+    f = open("sessions\\" + file)
     data = json.load(f)
 
     gpu_dict = dict()
@@ -104,12 +115,8 @@ def load():
             add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
 
 
-    user = User(data["ethereum"], data["ppw"], user_gpu)
+    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax"], data["investment"])
     return user
-
-# Calculates the return on investment
-def calculateROI():
-    return 1
 
 # This function adds a gpu to the user dictionary
 def add_gpus(user_gpu, gpu_dict, name):
@@ -205,13 +212,15 @@ load_gpus(gpu_dict)
 #remove_gpus(user_gpu, gpu_dict, "1080")
 
 
-user = load()
+user = load("saved_session.json")
 
-print(user.power_usage())
+print("Power usage: " + str(user.power_usage()))
 
-print(user.daily_revenue())
+print("Daily revenue: " + str(user.daily_revenue()))
 
-print(user.daily_earnings())
+print("Daily earnings: " + str(user.daily_earnings()))
+
+print("ROI: " + str(user.calculateROI()))
 
 print(user)
 #remove_gpus(user.user_gpu, gpu_dict, "3080")
