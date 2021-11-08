@@ -3,13 +3,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import warnings
 import time
 import json
 import math
 
+warnings.filterwarnings("ignore", category=DeprecationWarning) 
+
 # Selenium Driver is different for the OS you are using, choose one of the following
-PATH = "dependencies/windowschromedriver"
-#PATH = "dependencies/m1chromedriver"
+#PATH = "dependencies/windowschromedriver"
+PATH = "dependencies/m1chromedriver"
 #PATH = "dependencies/macchromedriver"
 
 # A class that defines the attributes of a GPU
@@ -29,10 +32,10 @@ class User:
         self.power_rate = 0         #Stores the power rate of the user in ppw
         self.user_gpu = dict()      #Stores a map that contains all the GPUS the user has
         self.tax_rate = 0           #Stores the percent rate of tax_ratees ex: 0.25
-        self.total_cost = 0;        #Stores the money spent with the RIG
+        self.total_cost = 0         #Stores the money spent with the RIG
         
     def __str__(self):
-        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.total_hashrate, self.tax_rate, self.total_cost)
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.get_total_hashrate(), self.tax_rate, self.total_cost)
     
     # A constructor used to initialize an user at once when all values are given. 
     def user_constructor(self, ethereum, power_rate, user_gpu, tax_rate, total_cost):
@@ -82,9 +85,9 @@ class User:
     # Returns the total hash rate of the user's GPUs
     def get_total_hashrate(self):
         total_hashrate =  0
-        for keys in self.user_gpu:
-            total_hashrate += float(self.user_gpu[keys].hash) * float(self.user_gpu[keys].quantity)
-        self.total_hashrate = total_hashrate
+        if self.user_gpu:
+            for keys in self.user_gpu:
+                total_hashrate += float(self.user_gpu[keys].hash) * float(self.user_gpu[keys].quantity)
         return total_hashrate
 
     # Loops through the gpus stored in the user_gpu map adding up the power consumption of the Gpus
@@ -100,7 +103,7 @@ class User:
     # Returns expected daily revenue before power costs
     # (total_hashrate/100) * (profitabiity per 100Mhs of eth)
     def daily_revenue(self):
-        daily_revenue = (self.get_total_hashrate()/100) * grab_profitability()
+        daily_revenue = (self.get_total_hashrate()/100) * self.grab_profitability()
         return daily_revenue
 
     # Returns the daily profit adjusted for power and tax_ratees
@@ -160,7 +163,7 @@ class User:
         # This function uses selenium to grab the profitablility per 100Mhs of ethereum
     
     #Uses Selenium to grab profitability per 100 Mhs
-    def grab_profitability():
+    def grab_profitability(self):
 
         # Url where profitability will be pulled from
         hiveon_url = "https://hiveon.net/"
@@ -196,7 +199,7 @@ class User:
         return float_price
 
     # This function grabs the Price of a single ETH Coin
-    def grab_eth_price():
+    def grab_eth_price(self):
         # Url where profitability will be pulled from
         url = "https://www.google.com/search?q=Ethereum+Price&oq=Ethereum+Price&aqs=chrome..69i57j69i60.1759j0j4&sourceid=chrome&ie=UTF-8"
 
@@ -238,15 +241,43 @@ load_gpus(all_gpus)
 
 
 
+# Page Loads 
+# GPUs are loaded into all_gpu dict
+
+# A new user instance is created
+
+caio = User()
+
+caio.set_ethereum_mined(1000)
+caio.set_total_cost(5000)
+caio.set_tax_rate(0.1)
+caio.set_power_rate(0.12)
+
+#print(caio)
+
+caio.add_gpus(caio.user_gpu, all_gpus, "3070Ti")
+caio.add_gpus(caio.user_gpu, all_gpus, "3070Ti") #This will give exacly 100Mh/s good for testing
+
+#print(caio)
+
+#caio.remove_gpus(caio.user_gpu, "3080")
+
+#print(caio)
 
 
 
+print(f"You currently own {caio.get_ethereum_mined()} ETH")
+print(f"Your total system price was {caio.get_total_cost()}$")
+#TODO need to mine
+print(f"Your current hashrate is {caio.get_total_hashrate()} Mh/s") # This could also be improved by adding hashrate to a variable every time a gpu is added or removed.
+# Need to fix calculate_remaining as it calls daily profit which is a very slow function, we should be saving it in a variable, this can be worked out once the demo is done
+# We should store the price of eth and price per 100/Mhs on a variable so that calling the functions is quicker. 
+print(f"Revenue per day is estimated at {caio.daily_revenue()}$")
+print(f"Profit per day is estimated at {caio.daily_profit()}$")  
+print(f"At current prices, your rig will be payed in {caio.calculate_remaining_days_for_ROI()} on TODO")  
 
-user_gpu = dict()
-caio = User(0, 1, user_gpu, 0.3, 1000)
-caio.set_ethereum_mined(20)
 
-print(caio)
+
 
 
 
@@ -255,9 +286,7 @@ print(caio)
 #print(grab_eth_price())
 
 #user_gpu = dict()
-#add_gpus(user_gpu, all_gpus, "1080")
-#add_gpus(user_gpu, all_gpus, "1080")
-#add_gpus(user_gpu, all_gpus, "3080")
+
 
 #remove_gpus(user_gpu, all_gpus, "3080")
 #remove_gpus(user_gpu, all_gpus, "1080")
@@ -274,7 +303,7 @@ print(caio)
 #print("ROI: " + str(user.calculateROI()))
 
 #print(user)
-#remove_gpus(user.user_gpu, all_gpus, "3080")
+#
 #user.save()
 
 #for keys in user.user_gpu:
