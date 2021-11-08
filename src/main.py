@@ -24,15 +24,21 @@ class GPU:
 
 # Class that stores the User's parameters
 class User:
-    def __init__(self, ethereum, ppw, user_gpu, tax, investment):
-        self.ethereum = ethereum #Stores the total amount of ethereum the user has
-        self.ppw = ppw           #Stores the power rate of the user
-        self.user_gpu = user_gpu #Stores a map that contains all the GPUS the user has
-        self.tax = tax           #Stores the percent rate of taxes ex: 0.25
-        self.investment = investment    #Stores the money spent with the RIG
-        self.total_hashrate = self.get_total_hashrate() #Stores the total hashrate of the RIG
+    def __init__(self):
+        self.ethereum = 0 #Stores the total amount of ethereum the user has
+        self.ppw = 0           #Stores the power rate of the user
+        self.user_gpu = dict() #Stores a map that contains all the GPUS the user has
+        self.tax = 0           #Stores the percent rate of taxes ex: 0.25
+        self.investment = 0;    #Stores the money spent with the RIG
+        
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, investment: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.investment)
+    
+    def set_ethereum_mined(self, ethereum):
+        self.ethereum = ethereum
+    
+    def get_ethereum_mined(self, ethereum):
+        return self.ethereum
     
     # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
@@ -40,6 +46,7 @@ class User:
         total_hashrate =  0
         for keys in self.user_gpu:
             total_hashrate += float(self.user_gpu[keys].hash) * float(self.user_gpu[keys].quantity)
+        self.total_hashrate = total_hashrate
         return total_hashrate
 
     # Loops through the gpus stored in the user_gpu map adding up the power consumption of the Gpus
@@ -94,13 +101,6 @@ def load_gpus(gpu_dict):
 
 gpu_dict = dict() #A Global variable that stores all the possivle GPU Types inside a map
 load_gpus(gpu_dict)
-
-
-
-
-
-
-
 
 # Loads a saved user session
 def load(file):
@@ -195,7 +195,11 @@ def grab_eth_price():
     return float_price
 
 
+user_gpu = dict()
+caio = User(0, 1, user_gpu, 0.3, 1000)
+caio.set_ethereum_mined(20)
 
+print(caio)
 
 
 
@@ -212,20 +216,20 @@ def grab_eth_price():
 #remove_gpus(user_gpu, gpu_dict, "1080")
 
 
-user = load("saved_session.json")
+#user = load("saved_session.json")
 
-print("Power usage: " + str(user.power_usage()))
+#print("Power usage: " + str(user.power_usage()))
 
-print("Daily revenue: " + str(user.daily_revenue()))
+#print("Daily revenue: " + str(user.daily_revenue()))
 
-print("Daily earnings: " + str(user.daily_profit()))
+#print("Daily earnings: " + str(user.daily_profit()))
 
-print("ROI: " + str(user.calculateROI()))
+#print("ROI: " + str(user.calculateROI()))
 
-print(user)
+#print(user)
 #remove_gpus(user.user_gpu, gpu_dict, "3080")
-user.save()
+#user.save()
 
-for keys in user.user_gpu:
-    print(user.user_gpu[keys])
+#for keys in user.user_gpu:
+    #print(user.user_gpu[keys])
 
