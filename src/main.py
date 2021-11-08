@@ -28,11 +28,11 @@ class User:
         self.ethereum = 0 #Stores the total amount of ethereum the user has
         self.ppw = 0           #Stores the power rate of the user
         self.user_gpu = dict() #Stores a map that contains all the GPUS the user has
-        self.tax = 0           #Stores the percent rate of taxes ex: 0.25
-        self.total_price = 0;    #Stores the money spent with the RIG
+        self.tax_rate = 0           #Stores the percent rate of tax_ratees ex: 0.25
+        self.total_cost = 0;    #Stores the money spent with the RIG
         
     def __str__(self):
-        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, total_price: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.total_price)
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax_rate, self.total_cost)
     
     # Sets the total ammount of ethereum mined, default is 0
     def set_ethereum_mined(self, ethereum):
@@ -41,6 +41,16 @@ class User:
     # Gets the total amount of ethereum mined
     def get_ethereum_mined(self, ethereum):
         return self.ethereum
+    
+    # Sets the total  cost of the system, default is 0
+    def set_total_cost(self, ethereum):
+        self.ethereum = ethereum
+    
+    # Gets the total cost of the system
+    def get_total_cost(self, ethereum):
+        return self.ethereum
+    
+    #
     
     # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
@@ -67,10 +77,10 @@ class User:
         daily_revenue = (self.get_total_hashrate()/100) * grab_profitability()
         return daily_revenue
 
-    # Returns the daily profit adjusted for power and taxes
+    # Returns the daily profit adjusted for power and tax_ratees
     def daily_profit(self):
-        tax = self.daily_revenue() * self.tax
-        daily_profit = self.daily_revenue() -  self.power_usage() - tax
+        tax_rate = self.daily_revenue() * self.tax_rate
+        daily_profit = self.daily_revenue() -  self.power_usage() - tax_rate
         return daily_profit
 
     # Saves session's data into a json file
@@ -79,14 +89,14 @@ class User:
         for keys in self.user_gpu:
             gpus[keys] = {"name" : self.user_gpu[keys].name, "quantity" : self.user_gpu[keys].quantity}
 
-        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax" : self.tax, "total_price" : self.total_price, "user gpus" : gpus}
+        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax_rate" : self.tax_rate, "total_cost" : self.total_cost, "user gpus" : gpus}
 
         with open("sessions\saved_session.json", "w") as f:
             json.dump(data, f)
 
-    # Calculates the return on total_price
+    # Calculates the return on total_cost
     def calculate_remaining_days_for_ROI(self):
-        ROI = self.total_price/self.daily_profit()
+        ROI = self.total_cost/self.daily_profit()
         math.ceil(ROI)
         return str(math.ceil(ROI)) + " days"
 
@@ -118,7 +128,7 @@ def load(file):
             add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
 
 
-    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax"], data["total_price"])
+    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax_rate"], data["total_cost"])
     return user
 
 # This function adds a gpu to the user dictionary
