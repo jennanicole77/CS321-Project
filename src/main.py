@@ -125,20 +125,20 @@ class User:
         f = open("sessions\\" + file)
         data = json.load(f)
 
-        gpu_dict = dict()
+        all_gpus = dict()
         user_gpu = dict()
-        load_gpus(gpu_dict)
+        load_gpus(all_gpus)
 
         for keys in data["user gpus"]:
             for x in range(0, data["user gpus"][keys]["quantity"]):
-                self.add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
+                self.add_gpus(user_gpu, all_gpus, data["user gpus"][keys]["name"])
 
         
         self.user_constructor(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
     
     # This function adds a gpu to the user dictionary
-    def add_gpus(self, user_gpu, gpu_dict, name):
-        user_gpu[gpu_dict[name].name] = gpu_dict[name]
+    def add_gpus(self, user_gpu, all_gpus, name):
+        user_gpu[all_gpus[name].name] = all_gpus[name]
         user_gpu[name].quantity = user_gpu[name].quantity + 1
 
     # This function removes a gpu from the user dictionary
@@ -221,17 +221,17 @@ class User:
 
     
 # Loads up the GPU name, hashrate and power consumption into a dictionary
-def load_gpus(gpu_dict):
+def load_gpus(all_gpus):
 
     f = open("data/gpuhashrate.dat", "r")
     for lines in f:
         temp_list = lines.split()
-        gpu_dict[temp_list[0]] = (GPU(temp_list[0], temp_list[1], temp_list[2]))
+        all_gpus[temp_list[0]] = (GPU(temp_list[0], temp_list[1], temp_list[2]))
 
     f.close()
 
-gpu_dict = dict() #A Global variable that stores all the possible GPU Types inside a map
-load_gpus(gpu_dict)
+all_gpus = dict() #A Global variable that stores all the possible GPU Types inside a map
+load_gpus(all_gpus)
 
 
 
@@ -255,12 +255,12 @@ print(caio)
 #print(grab_eth_price())
 
 #user_gpu = dict()
-#add_gpus(user_gpu, gpu_dict, "1080")
-#add_gpus(user_gpu, gpu_dict, "1080")
-#add_gpus(user_gpu, gpu_dict, "3080")
+#add_gpus(user_gpu, all_gpus, "1080")
+#add_gpus(user_gpu, all_gpus, "1080")
+#add_gpus(user_gpu, all_gpus, "3080")
 
-#remove_gpus(user_gpu, gpu_dict, "3080")
-#remove_gpus(user_gpu, gpu_dict, "1080")
+#remove_gpus(user_gpu, all_gpus, "3080")
+#remove_gpus(user_gpu, all_gpus, "1080")
 
 
 #user = load("saved_session.json")
@@ -274,7 +274,7 @@ print(caio)
 #print("ROI: " + str(user.calculateROI()))
 
 #print(user)
-#remove_gpus(user.user_gpu, gpu_dict, "3080")
+#remove_gpus(user.user_gpu, all_gpus, "3080")
 #user.save()
 
 #for keys in user.user_gpu:
