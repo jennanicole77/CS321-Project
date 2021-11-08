@@ -25,32 +25,47 @@ class GPU:
 # Class that stores the User's parameters
 class User:
     def __init__(self):
-        self.ethereum = 0 #Stores the total amount of ethereum the user has
-        self.ppw = 0           #Stores the power rate of the user
-        self.user_gpu = dict() #Stores a map that contains all the GPUS the user has
+        self.ethereum = 0           #Stores the total amount of ethereum the user has
+        self.power_rate = 0         #Stores the power rate of the user in ppw
+        self.user_gpu = dict()      #Stores a map that contains all the GPUS the user has
         self.tax_rate = 0           #Stores the percent rate of tax_ratees ex: 0.25
-        self.total_cost = 0;    #Stores the money spent with the RIG
+        self.total_cost = 0;        #Stores the money spent with the RIG
         
     def __str__(self):
-        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax_rate, self.total_cost)
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.total_hashrate, self.tax_rate, self.total_cost)
     
     # Sets the total ammount of ethereum mined, default is 0
     def set_ethereum_mined(self, ethereum):
         self.ethereum = ethereum
     
     # Gets the total amount of ethereum mined
-    def get_ethereum_mined(self, ethereum):
+    def get_ethereum_mined(self):
         return self.ethereum
     
     # Sets the total  cost of the system, default is 0
-    def set_total_cost(self, ethereum):
-        self.ethereum = ethereum
+    def set_total_cost(self, total_cost):
+        self.total_cost = total_cost
     
     # Gets the total cost of the system
-    def get_total_cost(self, ethereum):
-        return self.ethereum
+    def get_total_cost(self):
+        return self.total_cost
     
-    #
+     # Sets the total  cost of the system, default is 0
+    def set_tax_rate(self, tax_rate):
+        self.tax_rate = tax_rate
+    
+    # Gets the total cost of the system
+    def get_tax_rate(self):
+        return self.tax_rate
+    
+     # Sets the total  cost of the system, default is 0
+    def set_power_rate(self, power_rate):
+        self.power_rate = power_rate
+    
+    # Gets the total cost of the system
+    def get_power_rate(self):
+        return self.power_rate
+    
     
     # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
@@ -68,7 +83,7 @@ class User:
         total_gpu_power = 0
         for keys in self.user_gpu:
             total_gpu_power += float(self.user_gpu[keys].power) * float(self.user_gpu[keys].quantity)
-        power_usage = (total_gpu_power/1000) * self.ppw * 24
+        power_usage = (total_gpu_power/1000) * self.power_rate * 24
         return power_usage
 
     # Returns expected daily revenue before power costs
@@ -89,7 +104,7 @@ class User:
         for keys in self.user_gpu:
             gpus[keys] = {"name" : self.user_gpu[keys].name, "quantity" : self.user_gpu[keys].quantity}
 
-        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax_rate" : self.tax_rate, "total_cost" : self.total_cost, "user gpus" : gpus}
+        data = {"ethereum" : self.ethereum, "power_rate" : self.power_rate, "tax_rate" : self.tax_rate, "total_cost" : self.total_cost, "user gpus" : gpus}
 
         with open("sessions\saved_session.json", "w") as f:
             json.dump(data, f)
@@ -128,7 +143,7 @@ def load(file):
             add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
 
 
-    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax_rate"], data["total_cost"])
+    user = User(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
     return user
 
 # This function adds a gpu to the user dictionary
