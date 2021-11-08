@@ -12,9 +12,6 @@ PATH = "dependencies/windowschromedriver"
 #PATH = "dependencies/m1chromedriver"
 #PATH = "dependencies/macchromedriver"
 
-
-
-
 # A class that defines the attributes of a GPU
 class GPU:
     def __init__(self, name, hash, power):
@@ -28,16 +25,16 @@ class GPU:
 # Class that stores the User's parameters
 class User:
     def __init__(self, ethereum, ppw, user_gpu, tax, investment):
-        self.ethereum = ethereum
-        self.ppw = ppw
-        self.user_gpu = user_gpu
-        self.tax = tax
-        self.investment = investment
-        self.total_hashrate = self.get_total_hashrate()
-        self.roi = 1
+        self.ethereum = ethereum #Stores the total amount of ethereum the user has
+        self.ppw = ppw           #Stores the power rate of the user
+        self.user_gpu = user_gpu #Stores a map that contains all the GPUS the user has
+        self.tax = tax           #Stores the percent rate of taxes ex: 0.25
+        self.investment = investment    #Stores the money spent with the RIG
+        self.total_hashrate = self.get_total_hashrate() #Stores the total hashrate of the RIG
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, investment: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.investment)
     
+    # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
     def get_total_hashrate(self):
         total_hashrate =  0
@@ -45,6 +42,7 @@ class User:
             total_hashrate += float(self.user_gpu[keys].hash) * float(self.user_gpu[keys].quantity)
         return total_hashrate
 
+    # Loops through the gpus stored in the user_gpu map adding up the power consumption of the Gpus
     # Returns the total cost of power consumption in a 24 hour period
     def  power_usage(self):
         power_usage = 0
@@ -55,15 +53,16 @@ class User:
         return power_usage
 
     # Returns expected daily revenue before power costs
+    # (total_hashrate/100) * (profitabiity per 100Mhs of eth)
     def daily_revenue(self):
         daily_revenue = (self.get_total_hashrate()/100) * grab_profitability()
         return daily_revenue
 
-    # Returns expected daily earnings with power costs
-    def daily_earnings(self):
+    # Returns the daily profit adjusted for power and taxes
+    def daily_profit(self):
         tax = self.daily_revenue() * self.tax
-        daily_earnings = self.daily_revenue() -  self.power_usage() - tax
-        return daily_earnings
+        daily_profit = self.daily_revenue() -  self.power_usage() - tax
+        return daily_profit
 
     # Saves session's data into a json file
     def save(self):
@@ -77,19 +76,12 @@ class User:
             json.dump(data, f)
 
     # Calculates the return on investment
-    def calculateROI(self):
-        ROI = self.investment/self.daily_earnings()
+    def calculate_remaining_days_for_ROI(self):
+        ROI = self.investment/self.daily_profit()
         math.ceil(ROI)
         return str(math.ceil(ROI)) + " days"
 
     
-
-
-
-
-
-
-
 # Loads up the GPU name, hashrate and power consumption into a dictionary
 def load_gpus(gpu_dict):
 
@@ -99,6 +91,15 @@ def load_gpus(gpu_dict):
         gpu_dict[temp_list[0]] = (GPU(temp_list[0], temp_list[1], temp_list[2]))
 
     f.close()
+
+gpu_dict = dict() #A Global variable that stores all the possivle GPU Types inside a map
+load_gpus(gpu_dict)
+
+
+
+
+
+
 
 
 # Loads a saved user session
@@ -133,7 +134,7 @@ def remove_gpus(user_gpu, gpu_dict, name):
         else:
             user_gpu[name].quantity = user_gpu[name].quantity - 1
 
-# This function grabs the profitablility per 100Mhs of ethereum
+# This function uses selenium to grab the profitablility per 100Mhs of ethereum
 def grab_profitability():
 
     # Url where profitability will be pulled from
@@ -169,7 +170,7 @@ def grab_profitability():
 
     return float_price
 
-# This function grabs the Price of a single
+# This function grabs the Price of a single ETH Coin
 def grab_eth_price():
     # Url where profitability will be pulled from
     url = "https://www.google.com/search?q=Ethereum+Price&oq=Ethereum+Price&aqs=chrome..69i57j69i60.1759j0j4&sourceid=chrome&ie=UTF-8"
@@ -201,8 +202,7 @@ def grab_eth_price():
 
 #print(grab_profitability())
 #print(grab_eth_price())
-gpu_dict = dict()
-load_gpus(gpu_dict)
+
 #user_gpu = dict()
 #add_gpus(user_gpu, gpu_dict, "1080")
 #add_gpus(user_gpu, gpu_dict, "1080")
@@ -218,7 +218,7 @@ print("Power usage: " + str(user.power_usage()))
 
 print("Daily revenue: " + str(user.daily_revenue()))
 
-print("Daily earnings: " + str(user.daily_earnings()))
+print("Daily earnings: " + str(user.daily_profit()))
 
 print("ROI: " + str(user.calculateROI()))
 
