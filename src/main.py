@@ -29,14 +29,16 @@ class User:
         self.ppw = 0           #Stores the power rate of the user
         self.user_gpu = dict() #Stores a map that contains all the GPUS the user has
         self.tax = 0           #Stores the percent rate of taxes ex: 0.25
-        self.investment = 0;    #Stores the money spent with the RIG
+        self.total_price = 0;    #Stores the money spent with the RIG
         
     def __str__(self):
-        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, investment: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.investment)
+        return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax: {3}, total_price: {4}".format(self.ethereum, self.ppw, self.total_hashrate, self.tax, self.total_price)
     
+    # Sets the total ammount of ethereum mined, default is 0
     def set_ethereum_mined(self, ethereum):
         self.ethereum = ethereum
     
+    # Gets the total amount of ethereum mined
     def get_ethereum_mined(self, ethereum):
         return self.ethereum
     
@@ -77,14 +79,14 @@ class User:
         for keys in self.user_gpu:
             gpus[keys] = {"name" : self.user_gpu[keys].name, "quantity" : self.user_gpu[keys].quantity}
 
-        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax" : self.tax, "investment" : self.investment, "user gpus" : gpus}
+        data = {"ethereum" : self.ethereum, "ppw" : self.ppw, "tax" : self.tax, "total_price" : self.total_price, "user gpus" : gpus}
 
         with open("sessions\saved_session.json", "w") as f:
             json.dump(data, f)
 
-    # Calculates the return on investment
+    # Calculates the return on total_price
     def calculate_remaining_days_for_ROI(self):
-        ROI = self.investment/self.daily_profit()
+        ROI = self.total_price/self.daily_profit()
         math.ceil(ROI)
         return str(math.ceil(ROI)) + " days"
 
@@ -116,7 +118,7 @@ def load(file):
             add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
 
 
-    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax"], data["investment"])
+    user = User(data["ethereum"], data["ppw"], user_gpu, data["tax"], data["total_price"])
     return user
 
 # This function adds a gpu to the user dictionary
