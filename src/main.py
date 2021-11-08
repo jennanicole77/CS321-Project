@@ -34,6 +34,14 @@ class User:
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.total_hashrate, self.tax_rate, self.total_cost)
     
+    def user_constructor(self, ethereum, power_rate, user_gpu, tax_rate, total_cost):
+        self.ethereum = ethereum
+        self.power_rate = power_rate
+        self.user_gpu = user_gpu
+        self.tax_rate = tax_rate
+        self.total_cost = total_cost
+
+
     # Sets the total ammount of ethereum mined, default is 0
     def set_ethereum_mined(self, ethereum):
         self.ethereum = ethereum
@@ -108,6 +116,22 @@ class User:
 
         with open("sessions\saved_session.json", "w") as f:
             json.dump(data, f)
+    
+    # Loads a saved user session
+    def load(self, file):
+        f = open("sessions\\" + file)
+        data = json.load(f)
+
+        gpu_dict = dict()
+        user_gpu = dict()
+        load_gpus(gpu_dict)
+
+        for keys in data["user gpus"]:
+            for x in range(0, data["user gpus"][keys]["quantity"]):
+                add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
+
+        
+        self.user_constructor(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
 
     # Calculates the return on total_cost
     def calculate_remaining_days_for_ROI(self):
@@ -129,22 +153,7 @@ def load_gpus(gpu_dict):
 gpu_dict = dict() #A Global variable that stores all the possivle GPU Types inside a map
 load_gpus(gpu_dict)
 
-# Loads a saved user session
-def load(file):
-    f = open("sessions\\" + file)
-    data = json.load(f)
 
-    gpu_dict = dict()
-    user_gpu = dict()
-    load_gpus(gpu_dict)
-
-    for keys in data["user gpus"]:
-        for x in range(0, data["user gpus"][keys]["quantity"]):
-            add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
-
-
-    user = User(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
-    return user
 
 # This function adds a gpu to the user dictionary
 def add_gpus(user_gpu, gpu_dict, name):
