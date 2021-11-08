@@ -34,13 +34,13 @@ class User:
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.total_hashrate, self.tax_rate, self.total_cost)
     
+    # A constructor used to initialize an user at once when all values are given. 
     def user_constructor(self, ethereum, power_rate, user_gpu, tax_rate, total_cost):
         self.ethereum = ethereum
         self.power_rate = power_rate
         self.user_gpu = user_gpu
         self.tax_rate = tax_rate
         self.total_cost = total_cost
-
 
     # Sets the total ammount of ethereum mined, default is 0
     def set_ethereum_mined(self, ethereum):
@@ -59,6 +59,8 @@ class User:
         return self.total_cost
     
      # Sets the total  cost of the system, default is 0
+    
+    # Sets the tax rate
     def set_tax_rate(self, tax_rate):
         self.tax_rate = tax_rate
     
@@ -67,13 +69,14 @@ class User:
         return self.tax_rate
     
      # Sets the total  cost of the system, default is 0
+    
+    # Sets the power rate
     def set_power_rate(self, power_rate):
         self.power_rate = power_rate
     
     # Gets the total cost of the system
     def get_power_rate(self):
         return self.power_rate
-    
     
     # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
@@ -128,16 +131,93 @@ class User:
 
         for keys in data["user gpus"]:
             for x in range(0, data["user gpus"][keys]["quantity"]):
-                add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
+                self.add_gpus(user_gpu, gpu_dict, data["user gpus"][keys]["name"])
 
         
         self.user_constructor(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
+    
+    # This function adds a gpu to the user dictionary
+    def add_gpus(self, user_gpu, gpu_dict, name):
+        user_gpu[gpu_dict[name].name] = gpu_dict[name]
+        user_gpu[name].quantity = user_gpu[name].quantity + 1
+
+    # This function removes a gpu from the user dictionary
+    def remove_gpus(self, user_gpu, name):
+        
+        if name in user_gpu.keys():
+            if user_gpu[name].quantity == 1:
+                user_gpu.pop(name)
+            else:
+                user_gpu[name].quantity = user_gpu[name].quantity - 1
 
     # Calculates the return on total_cost
     def calculate_remaining_days_for_ROI(self):
+
         ROI = self.total_cost/self.daily_profit()
         math.ceil(ROI)
         return str(math.ceil(ROI)) + " days"
+
+        # This function uses selenium to grab the profitablility per 100Mhs of ethereum
+    
+    #Uses Selenium to grab profitability per 100 Mhs
+    def grab_profitability():
+
+        # Url where profitability will be pulled from
+        hiveon_url = "https://hiveon.net/"
+
+        #Forces selenium to run on headless mode
+        op = webdriver.ChromeOptions()
+        op.add_argument('headless')
+
+        # Loads up the webdriver and page
+        driver = webdriver.Chrome(PATH, options=op)
+        #driver = webdriver.Chrome(PATH)
+        driver.get(hiveon_url)
+        
+
+
+        #Finds the required value on the website and pulls the information 
+        location = "/html/body/div[1]/div[1]/div/section[3]/div/div/div[1]/div[2]"
+        try:
+            main = WebDriverWait(driver, 5).until(
+            EC.text_to_be_present_in_element((By.XPATH, location), ".")
+        )
+        finally:
+            price_string = driver.find_element_by_xpath(location).text
+            driver.quit()
+        
+        # Parses the return string
+
+        price_string = price_string.replace('$', ' ')
+        split_string = price_string.split()
+
+        float_price = float(split_string[0])
+
+        return float_price
+
+    # This function grabs the Price of a single ETH Coin
+    def grab_eth_price():
+        # Url where profitability will be pulled from
+        url = "https://www.google.com/search?q=Ethereum+Price&oq=Ethereum+Price&aqs=chrome..69i57j69i60.1759j0j4&sourceid=chrome&ie=UTF-8"
+
+        
+
+        #Forces selenium to run on headless mode
+        op = webdriver.ChromeOptions()
+        op.add_argument('headless')
+
+        # Loads up the webdriver and page
+        driver = webdriver.Chrome(PATH, options=op)
+        driver.get(url)
+        
+        #Finds the required value on the website and pulls the information 
+        location = "/html/body/div[7]/div/div[9]/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div/div/div/div[1]/div/div[1]/div[1]/div[2]/span[1]"
+        price_string = driver.find_element_by_xpath(location).text
+        price_string = price_string.replace(',', '')
+        
+        float_price = float(price_string)
+
+        return float_price
 
     
 # Loads up the GPU name, hashrate and power consumption into a dictionary
@@ -150,85 +230,16 @@ def load_gpus(gpu_dict):
 
     f.close()
 
-gpu_dict = dict() #A Global variable that stores all the possivle GPU Types inside a map
+gpu_dict = dict() #A Global variable that stores all the possible GPU Types inside a map
 load_gpus(gpu_dict)
 
 
 
-# This function adds a gpu to the user dictionary
-def add_gpus(user_gpu, gpu_dict, name):
-    
-    user_gpu[gpu_dict[name].name] = gpu_dict[name]
-    user_gpu[name].quantity = user_gpu[name].quantity + 1
-
-# This function removes a gpu from the user dictionary
-def remove_gpus(user_gpu, gpu_dict, name):
-    
-    if name in user_gpu.keys():
-        if user_gpu[name].quantity == 1:
-            user_gpu.pop(name)
-        else:
-            user_gpu[name].quantity = user_gpu[name].quantity - 1
-
-# This function uses selenium to grab the profitablility per 100Mhs of ethereum
-def grab_profitability():
-
-    # Url where profitability will be pulled from
-    hiveon_url = "https://hiveon.net/"
-
-    #Forces selenium to run on headless mode
-    op = webdriver.ChromeOptions()
-    op.add_argument('headless')
-
-    # Loads up the webdriver and page
-    driver = webdriver.Chrome(PATH, options=op)
-    #driver = webdriver.Chrome(PATH)
-    driver.get(hiveon_url)
-    
 
 
-    #Finds the required value on the website and pulls the information 
-    location = "/html/body/div[1]/div[1]/div/section[3]/div/div/div[1]/div[2]"
-    try:
-        main = WebDriverWait(driver, 5).until(
-        EC.text_to_be_present_in_element((By.XPATH, location), ".")
-    )
-    finally:
-        price_string = driver.find_element_by_xpath(location).text
-        driver.quit()
-    
-    # Parses the return string
 
-    price_string = price_string.replace('$', ' ')
-    split_string = price_string.split()
 
-    float_price = float(split_string[0])
 
-    return float_price
-
-# This function grabs the Price of a single ETH Coin
-def grab_eth_price():
-    # Url where profitability will be pulled from
-    url = "https://www.google.com/search?q=Ethereum+Price&oq=Ethereum+Price&aqs=chrome..69i57j69i60.1759j0j4&sourceid=chrome&ie=UTF-8"
-
-    
-
-    #Forces selenium to run on headless mode
-    op = webdriver.ChromeOptions()
-    op.add_argument('headless')
-
-    # Loads up the webdriver and page
-    driver = webdriver.Chrome(PATH, options=op)
-    driver.get(url)
-    
-    #Finds the required value on the website and pulls the information 
-    location = "/html/body/div[7]/div/div[9]/div[1]/div/div[2]/div[2]/div/div/div[1]/div/div/div/div/div[1]/div/div[1]/div[1]/div[2]/span[1]"
-    price_string = driver.find_element_by_xpath(location).text
-    price_string = price_string.replace(',', '')
-    
-    float_price = float(price_string)
-
-    return float_price
 
 
 user_gpu = dict()
