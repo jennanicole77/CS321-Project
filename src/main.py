@@ -27,12 +27,16 @@ class GPU:
 
 # Class that stores the User's parameters
 class User:
-    def __init__(self):
+    def __init__(self, All_Gpu_Dict):
         self.ethereum = 0           #Stores the total amount of ethereum the user has
         self.power_rate = 0         #Stores the power rate of the user in ppw
         self.user_gpu = dict()      #Stores a map that contains all the GPUS the user has
         self.tax_rate = 0           #Stores the percent rate of tax_ratees ex: 0.25
         self.total_cost = 0         #Stores the money spent with the RIG
+        self.eth_price = 0
+        self.cash_per_100 = 0
+        self.total_hashrate = 0
+        self.All_Gpu_Dict = All_Gpu_Dict
         
     def __str__(self):
         return "amount of ethereum: {0}, price per wattage: {1}, total hashrate: {2}, tax_rate: {3}, total_cost: {4}".format(self.ethereum, self.power_rate, self.get_total_hashrate(), self.tax_rate, self.total_cost)
@@ -81,14 +85,29 @@ class User:
     def get_power_rate(self):
         return self.power_rate
     
+    # Grabs the price of eth without wasting selenium calls if value already exists
+    def efficient_get_eth(self):
+        if self.eth_price == 0:
+            self.eth_price = self.grab_eth_price()
+        return self.eth_price
+
+    def efficient_get_mhs(self):
+        if self.cash_per_100 == 0:
+            self.cash_per_100 = self.grab_profitability()
+        return self.cash_per_100
+
+    # Returns the value needed to be mined in dollars.
+    def need_to_mine(self):
+        ret = self.get_total_cost() - self.get_ethereum_mined() 
+        if ret < 0:
+            ret = 0
+        return ret
+
+
     # Loops through the gpus stored in the user_gpu map adding upthe hashrates of all GPUs
     # Returns the total hash rate of the user's GPUs
     def get_total_hashrate(self):
-        total_hashrate =  0
-        if self.user_gpu:
-            for keys in self.user_gpu:
-                total_hashrate += float(self.user_gpu[keys].hash) * float(self.user_gpu[keys].quantity)
-        return total_hashrate
+        return self.total_hashrate
 
     # Loops through the gpus stored in the user_gpu map adding up the power consumption of the Gpus
     # Returns the total cost of power consumption in a 24 hour period
@@ -103,7 +122,7 @@ class User:
     # Returns expected daily revenue before power costs
     # (total_hashrate/100) * (profitabiity per 100Mhs of eth)
     def daily_revenue(self):
-        daily_revenue = (self.get_total_hashrate()/100) * self.grab_profitability()
+        daily_revenue = (self.get_total_hashrate()/100) * self.efficient_get_mhs()
         return daily_revenue
 
     # Returns the daily profit adjusted for power and tax_ratees
@@ -140,23 +159,28 @@ class User:
         self.user_constructor(data["ethereum"], data["power_rate"], user_gpu, data["tax_rate"], data["total_cost"])
     
     # This function adds a gpu to the user dictionary
-    def add_gpus(self, user_gpu, all_gpus, name):
-        user_gpu[all_gpus[name].name] = all_gpus[name]
-        user_gpu[name].quantity = user_gpu[name].quantity + 1
+    def add_gpus(self, name, quantity):
+        if quantity > 0:
+            self.user_gpu[self.All_Gpu_Dict[name].name] = self.All_Gpu_Dict[name]
+            self.user_gpu[name].quantity = self.user_gpu[name].quantity + quantity
+            self.total_hashrate = self.total_hashrate + float(self.user_gpu[name].hash)
 
     # This function removes a gpu from the user dictionary
-    def remove_gpus(self, user_gpu, name):
+    def remove_gpus(self, name, quantity):
         
-        if name in user_gpu.keys():
-            if user_gpu[name].quantity == 1:
-                user_gpu.pop(name)
-            else:
-                user_gpu[name].quantity = user_gpu[name].quantity - 1
+        if name in self.user_gpu.keys():
+            self.user_gpu[name].quantity = self.user_gpu[name].quantity - quantity
+            if self.user_gpu[name].quantity <= 0:
+                self.user_gpu.pop(name)
+                
 
     # Calculates the return on total_cost
     def calculate_remaining_days_for_ROI(self):
 
-        ROI = self.total_cost/self.daily_profit()
+        daily_profit = self.daily_profit()
+        if daily_profit == 0:
+            return 0
+        ROI = self.total_cost/daily_profit
         math.ceil(ROI)
         return str(math.ceil(ROI)) + " days"
 
@@ -233,8 +257,7 @@ def load_gpus(all_gpus):
 
     f.close()
 
-all_gpus = dict() #A Global variable that stores all the possible GPU Types inside a map
-load_gpus(all_gpus)
+
 
 
 
@@ -244,9 +267,12 @@ load_gpus(all_gpus)
 # Page Loads 
 # GPUs are loaded into all_gpu dict
 
+all_gpus = dict() #A Global variable that stores all the possible GPU Types inside a map
+load_gpus(all_gpus)
+
 # A new user instance is created
 
-caio = User()
+caio = User(all_gpus)
 
 caio.set_ethereum_mined(1000)
 caio.set_total_cost(5000)
@@ -255,26 +281,19 @@ caio.set_power_rate(0.12)
 
 #print(caio)
 
-caio.add_gpus(caio.user_gpu, all_gpus, "3070Ti")
-caio.add_gpus(caio.user_gpu, all_gpus, "3070Ti") #This will give exacly 100Mh/s good for testing
-
-#print(caio)
-
-#caio.remove_gpus(caio.user_gpu, "3080")
-
-#print(caio)
+caio.add_gpus("3070Ti", 4)
+caio.add_gpus("3070Ti", 2) #This will give exacly 100Mh/s good for testing
+caio.remove_gpus("3070Ti", 4)
+print(caio)
 
 
-
-print(f"You currently own {caio.get_ethereum_mined()} ETH")
+print(f"\n\nYou currently own {caio.get_ethereum_mined()} ETH")
 print(f"Your total system price was {caio.get_total_cost()}$")
-#TODO need to mine
-print(f"Your current hashrate is {caio.get_total_hashrate()} Mh/s") # This could also be improved by adding hashrate to a variable every time a gpu is added or removed.
-# Need to fix calculate_remaining as it calls daily profit which is a very slow function, we should be saving it in a variable, this can be worked out once the demo is done
-# We should store the price of eth and price per 100/Mhs on a variable so that calling the functions is quicker. 
+print(f"You need to mine: {caio.need_to_mine()}$ to reach ROI")
+print(f"Your current hashrate is {caio.get_total_hashrate()} Mh/s") 
 print(f"Revenue per day is estimated at {caio.daily_revenue()}$")
 print(f"Profit per day is estimated at {caio.daily_profit()}$")  
-print(f"At current prices, your rig will be payed in {caio.calculate_remaining_days_for_ROI()} on TODO")  
+print(f"At current prices, your rig will be payed in {caio.calculate_remaining_days_for_ROI()} days on TODO\n\n")  
 
 
 
